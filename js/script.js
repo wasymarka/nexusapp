@@ -132,7 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Clerk + Convex Integration
   // ============================
 
-  const CONVEX_URL = 'http://127.0.0.1:3210';
+  // Backend URL jest teraz opcjonalny: ustaw go przez
+  //  - globalną zmienną window.CONVEX_URL, lub
+  //  - parametr zapytania ?backend=local (ustawi domyślnie http://127.0.0.1:3210)
+  const params = new URLSearchParams(location.search);
+  const CONVEX_URL = window.CONVEX_URL || (params.get('backend') === 'local' ? 'http://127.0.0.1:3210' : null);
 
   // Referencja do CTA w nagłówku (prawa strona paska)
   function getHeaderCTA(){
@@ -160,6 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function checkConvexConnectivity(){
+    // jeśli backend nie jest skonfigurowany, nie próbujemy żadnego połączenia
+    if (!CONVEX_URL){
+      setBackendStatus(false);
+      return false;
+    }
     try{
       // Use no-cors to avoid CORS failures; success means reachable
       await fetch(CONVEX_URL, { mode: 'no-cors' });
@@ -241,6 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Convex client and forward Clerk token
   let convexClient = null;
   function initConvex(){
+    // nie inicjalizujemy, jeśli backend nie jest skonfigurowany
+    if (!CONVEX_URL) return;
     if (!window.convex || !window.convex.ConvexClient){
       console.error('Convex browser client not loaded');
       return;
